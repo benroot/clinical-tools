@@ -39,7 +39,7 @@ to force "treat this past date as EDD" if a real need for it shows up.
 
 ## Iterations
 
-### Iteration 1 — establish and display the three parameters (current focus)
+### Iteration 1 — establish and display the three parameters (done)
 
 - Single input box; parse as LMP, GA, or EDD per the table above.
 - Once a valid value is parsed, compute and display all three: **LMP**, **GA
@@ -47,7 +47,7 @@ to force "treat this past date as EDD" if a real need for it shows up.
 - Display the date boundaries of each trimester for this specific pregnancy
   (i.e. actual calendar dates, not just week numbers), derived from the LMP.
 
-### Iteration 2 — additional calculations against the fixed EDD
+### Iteration 2 — additional calculations against the fixed EDD (current focus)
 
 Once the three parameters are established (iteration 1), add:
 

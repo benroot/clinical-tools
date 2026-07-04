@@ -70,10 +70,14 @@ function pregnancyCalculator() {
   return {
     rawInput: "",
     errorMessage: "",
+    lmp: null,
     lmpDisplay: "",
     gaDisplay: "",
     eddDisplay: "",
     trimesters: [],
+    secondaryInput: "",
+    secondaryError: "",
+    secondaryResult: "",
 
     get hasResult() {
       return this.eddDisplay !== "" && this.errorMessage === "";
@@ -81,10 +85,14 @@ function pregnancyCalculator() {
 
     calculate() {
       this.errorMessage = "";
+      this.lmp = null;
       this.lmpDisplay = "";
       this.gaDisplay = "";
       this.eddDisplay = "";
       this.trimesters = [];
+      this.secondaryInput = "";
+      this.secondaryError = "";
+      this.secondaryResult = "";
 
       if (!this.rawInput.trim()) return;
 
@@ -103,6 +111,7 @@ function pregnancyCalculator() {
       const edd = applyOffset(lmp, { unit: "t", amount: DAYS_IN_FULL_TERM_PREGNANCY });
       const gaDaysToday = daysBetween(lmp, today);
 
+      this.lmp = lmp;
       this.lmpDisplay = formatDate(lmp);
       this.eddDisplay = formatDate(edd);
       this.gaDisplay = formatWeeksAndDays(gaDaysToday);
@@ -113,6 +122,41 @@ function pregnancyCalculator() {
           `${formatDate(applyOffset(lmp, { unit: "t", amount: range.startDay }))} ` +
           `to ${formatDate(applyOffset(lmp, { unit: "t", amount: range.endDay }))}`,
       }));
+    },
+
+    /**
+     * Iteration 2: given the fixed LMP from calculate(), resolves a
+     * second, independent input as either a target gestational age
+     * (-> its calendar date) or a target calendar date (-> the
+     * gestational age on that date).
+     */
+    calculateSecondary() {
+      this.secondaryError = "";
+      this.secondaryResult = "";
+
+      const raw = this.secondaryInput.trim();
+      if (!raw || !this.lmp) return;
+
+      const ga = parseWeeksAndDays(raw);
+      if (ga) {
+        const gaDays = ga.weeks * 7 + ga.days;
+        const date = applyOffset(this.lmp, { unit: "t", amount: gaDays });
+        this.secondaryResult = `Gestational age ${formatWeeksAndDays(gaDays)} falls on ${formatDate(date)}.`;
+        return;
+      }
+
+      const date = parseDate(raw);
+      if (date) {
+        if (date < this.lmp) {
+          this.secondaryError = "That date is before the LMP, so gestational age isn't defined yet.";
+          return;
+        }
+        const gaDays = daysBetween(this.lmp, date);
+        this.secondaryResult = `Gestational age on ${formatDate(date)} is ${formatWeeksAndDays(gaDays)}.`;
+        return;
+      }
+
+      this.secondaryError = "Enter a gestational age like 20w0d, or a date as MM/DD/YYYY.";
     },
   };
 }

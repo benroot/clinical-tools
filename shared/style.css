@@ -43,6 +43,15 @@ body {
   color: var(--bs-secondary-color);
 }
 
+/* A computed, sentence-style result (distinct from .result-value,
+   which is for a single prominent headline value). Renders as
+   normal-emphasis body text rather than a muted hint, since it's an
+   answer, not guidance. Pair with the <output> element. */
+.calc-result {
+  display: block;
+  color: var(--bs-body-color);
+}
+
 /* Where a calculated result is displayed. Uses a visible border and
    generous padding so the result reads as distinct from input
    controls, without relying on color alone (this satisfies

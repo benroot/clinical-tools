@@ -78,6 +78,36 @@
       </ul>
     </section>
 
+    <form novalidate x-show="hasResult" @submit.prevent="calculateSecondary()">
+
+      <div class="field-group">
+        <label for="secondary-input" class="form-label">Look up a date or gestational age</label>
+        <input
+          type="text"
+          id="secondary-input"
+          name="secondary-input"
+          class="form-control"
+          inputmode="text"
+          autocomplete="off"
+          placeholder="MM/DD/YYYY or a gestational age like 20w0d"
+          aria-describedby="secondary-input-hint"
+          x-model="secondaryInput"
+          @input="calculateSecondary()">
+        <div id="secondary-input-hint" class="field-hint">
+          Enter a gestational age (e.g. 20w0d) to find its calendar date, or a
+          date (MM/DD/YYYY) to find the gestational age on that date, for
+          this pregnancy.
+        </div>
+        <p
+          class="is-invalid-message text-danger mt-1"
+          x-show="secondaryError"
+          x-text="secondaryError"
+          role="alert"></p>
+        <output class="calc-result" for="secondary-input" x-show="secondaryResult" x-text="secondaryResult"></output>
+      </div>
+
+    </form>
+
     <p class="field-hint mt-3">
       Estimate based on Naegele's Rule (LMP + 280 days / 40 weeks), which
       assumes a 28-day cycle. A care provider may adjust this based on
