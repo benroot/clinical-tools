@@ -69,14 +69,15 @@ const OFFSET_UNIT_LABELS = {
 
 /**
  * Parses a whole weeks+days duration string like "18w3d" (non-negative
- * integers). The days part is optional — "12w" parses as 12w0d. Not
- * tied to any particular domain meaning — callers decide what the
- * duration represents.
+ * integers). The days number and its trailing "d" are both optional —
+ * "12w" and "18w3" parse the same as "12w0d" and "18w3d". Not tied to
+ * any particular domain meaning — callers decide what the duration
+ * represents.
  * @param {string} value
  * @returns {{weeks: number, days: number}|null}
  */
 function parseWeeksAndDays(value) {
-  const match = /^\s*(\d+)\s*[wW]\s*(?:(\d+)\s*[dD]\s*)?$/.exec(value || "");
+  const match = /^\s*(\d+)\s*[wW]\s*(?:(\d+)\s*[dD]?\s*)?$/.exec(value || "");
   if (!match) return null;
   return { weeks: Number(match[1]), days: Number(match[2] || 0) };
 }

@@ -25,7 +25,7 @@ entered from its format:
 
 | Format | Example | Interpreted as |
 |---|---|---|
-| `XwYd`, or just `Xw` (days default to 0) | `18w3d`, `12w` | GA as of today |
+| `XwYd`, `XwY` (trailing `d` optional), or `Xw` (days default to 0) | `18w3d`, `18w3`, `12w` | GA as of today |
 | `MM/DD/YYYY`, date is today or in the past | `03/10/2026` | LMP |
 | `MM/DD/YYYY`, date is in the future | `12/01/2026` | EDD |
 
