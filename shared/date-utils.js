@@ -68,6 +68,31 @@ const OFFSET_UNIT_LABELS = {
 };
 
 /**
+ * Parses a whole weeks+days duration string like "18w3d" (non-negative
+ * integers). The days part is optional — "12w" parses as 12w0d. Not
+ * tied to any particular domain meaning — callers decide what the
+ * duration represents.
+ * @param {string} value
+ * @returns {{weeks: number, days: number}|null}
+ */
+function parseWeeksAndDays(value) {
+  const match = /^\s*(\d+)\s*[wW]\s*(?:(\d+)\s*[dD]\s*)?$/.exec(value || "");
+  if (!match) return null;
+  return { weeks: Number(match[1]), days: Number(match[2] || 0) };
+}
+
+/**
+ * Formats a whole number of days as a "XwYd" weeks+days string.
+ * @param {number} totalDays
+ * @returns {string}
+ */
+function formatWeeksAndDays(totalDays) {
+  const weeks = Math.floor(totalDays / 7);
+  const days = totalDays % 7;
+  return `${weeks}w${days}d`;
+}
+
+/**
  * Adds a parsed offset to a base date. Months are treated as a flat
  * 28 days (4 weeks) rather than calendar-month arithmetic, so every
  * unit is a simple day-count multiple. Years still use calendar-year

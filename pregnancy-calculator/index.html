@@ -20,32 +20,30 @@
     <header class="app-header">
       <h1>Pregnancy Due Date Calculator</h1>
       <p>
-        Enter the first day of the last menstrual period (LMP) to estimate
-        the due date.
+        Enter what you know — the last menstrual period (LMP), the current
+        gestational age, or the due date — and the other values are
+        calculated for you.
       </p>
     </header>
 
     <form novalidate @submit.prevent="calculate()">
 
       <div class="field-group">
-        <label for="lmp-date" class="form-label">Last menstrual period (LMP)</label>
+        <label for="pregnancy-input" class="form-label">LMP, gestational age, or due date</label>
         <input
           type="text"
-          id="lmp-date"
-          name="lmp-date"
+          id="pregnancy-input"
+          name="pregnancy-input"
           class="form-control"
           inputmode="text"
           autocomplete="off"
-          placeholder="MM/DD/YYYY or an offset like w-6"
-          aria-describedby="lmp-date-hint"
-          x-model="lmpInput"
-          @input="calculate()"
-          @blur="commitLmp()"
-          @keydown.enter.prevent="commitLmp()">
-        <div id="lmp-date-hint" class="field-hint">
-          Format: MM/DD/YYYY — or enter an offset from today, like w-6 (6 weeks
-          ago) or t-45 (45 days ago). The field will be replaced with the
-          resulting date once you leave it.
+          placeholder="MM/DD/YYYY or a gestational age like 18w3d"
+          aria-describedby="pregnancy-input-hint"
+          x-model="rawInput"
+          @input="calculate()">
+        <div id="pregnancy-input-hint" class="field-hint">
+          Enter the LMP or due date as MM/DD/YYYY, or the current gestational
+          age as weeks and days, e.g. 18w3d.
         </div>
         <p
           class="is-invalid-message text-danger mt-1"
@@ -60,10 +58,24 @@
       class="result-panel"
       aria-live="polite"
       :hidden="!hasResult">
-      <p class="result-label" id="result-label">Estimated due date</p>
-      <p class="result-value" aria-labelledby="result-label" x-text="dueDate"></p>
-      <p class="field-hint" x-show="gestationSummary" x-text="gestationSummary"></p>
-      <p class="field-hint" x-show="trimesterLabel" x-text="trimesterLabel"></p>
+
+      <dl>
+        <dt>Last menstrual period (LMP)</dt>
+        <dd x-text="lmpDisplay"></dd>
+
+        <dt>Gestational age (today)</dt>
+        <dd x-text="gaDisplay"></dd>
+
+        <dt>Estimated due date (EDD)</dt>
+        <dd x-text="eddDisplay"></dd>
+      </dl>
+
+      <p class="result-label">Trimesters</p>
+      <ul>
+        <template x-for="trimester in trimesters" :key="trimester.label">
+          <li><span x-text="trimester.label"></span>: <span x-text="trimester.rangeLabel"></span></li>
+        </template>
+      </ul>
     </section>
 
     <p class="field-hint mt-3">
