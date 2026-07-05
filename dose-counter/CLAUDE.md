@@ -74,3 +74,14 @@ sub-steps; each is confirmed working before starting the next.
   independent of "today" — it only depends on the first-dispense info and
   the course total, so it can display as soon as those are set. (Done:
   `finalDoseSummary`, computed alongside 3c in `computeSchedule()`.)
+- **3e — full dose-schedule table.** A day-by-day table view of the same
+  schedule as 3c/3d: one row per calendar date from the first dispense
+  through the final dose, one column per dose slot for the current
+  frequency. Each cell is given / remaining / not applicable (a slot past
+  the final day's shorter requirement, or — on day 1 specifically — a slot
+  before dosing began). On day 1, a partial count fills from the *last*
+  slot backwards (dosing started partway through the day, so the earliest
+  slot(s) were skipped, not the latest); every other day fills from the
+  first slot forward as the day progresses. Renders the full date range, no
+  truncation. (Done: `scheduleRows` getter, sharing `getScheduleDetails()`
+  with `computeSchedule()`.)

@@ -50,6 +50,11 @@ function doseCounter() {
       return `${n} dose${n === 1 ? "" : "s"}`;
     },
 
+    get firstDayDoseCountLabel() {
+      const dateLabel = this.firstDoseDate ? formatDate(this.firstDoseDate) : "that day";
+      return `How many doses were given on ${dateLabel}`;
+    },
+
     /**
      * Iteration 3c: whether today's dose count needs asking at all —
      * skipped when the first dispense date is today, since 3b already
@@ -132,37 +137,22 @@ function doseCounter() {
     },
 
     /**
-     * Iteration 3c/3d: derives doses given (and doses remaining) from
-     * the first-dispense schedule rather than a typed count, and
-     * separately projects the date of the final dose.
-     *
-     * Day 1 gets firstDayDoseCount doses (always 1 for qd); every day
-     * after gets a full doses-per-day, including the final day, which
-     * may end up short if day 1 was short.
+     * Core schedule math, shared by computeSchedule() (summary text)
+     * and scheduleRows (the day-by-day table). Day 1 gets day1Count
+     * doses (always 1 for qd); every day after gets a full
+     * doses-per-day, including the final day, which may end up short
+     * if day 1 was short.
      */
-    computeSchedule() {
-      this.scheduleError = "";
-      this.scheduleRemainingSummary = "";
-      this.finalDoseSummary = "";
-
-      if (!this.hasResult || !this.firstDoseDate) return;
+    getScheduleDetails() {
+      if (!this.hasResult || !this.firstDoseDate) return null;
 
       const dosesPerDay = FREQUENCY_DOSES_PER_DAY[this.frequency];
       const day1Count = this.frequency === "qd" ? 1 : this.firstDayDoseCount;
-
       const elapsedDays = daysBetween(this.firstDoseDate, new Date());
       const given =
         elapsedDays <= 0
           ? day1Count
           : day1Count + (elapsedDays - 1) * dosesPerDay + this.todayDoseCount;
-
-      if (given > this.totalDoses) {
-        this.scheduleError =
-          "The schedule implies more doses given than the total course — check the entries above.";
-      } else {
-        const remaining = this.totalDoses - given;
-        this.scheduleRemainingSummary = `${remaining} dose${remaining === 1 ? "" : "s"} remaining to prescribe.`;
-      }
 
       const remainingAfterDay1 = this.totalDoses - day1Count;
       let finalDayOffset = 0;
@@ -173,9 +163,108 @@ function doseCounter() {
         dosesOnFinalDay = remainingAfterDay1 - (fullDays - 1) * dosesPerDay;
       }
 
+      return { dosesPerDay, day1Count, elapsedDays, given, finalDayOffset, dosesOnFinalDay };
+    },
+
+    /**
+     * Iteration 3c/3d: derives doses given (and doses remaining) from
+     * the first-dispense schedule rather than a typed count, and
+     * separately projects the date of the final dose.
+     */
+    computeSchedule() {
+      this.scheduleError = "";
+      this.scheduleRemainingSummary = "";
+      this.finalDoseSummary = "";
+
+      const details = this.getScheduleDetails();
+      if (!details) return;
+      const { given, finalDayOffset, dosesOnFinalDay } = details;
+
+      if (given > this.totalDoses) {
+        this.scheduleError =
+          "The schedule implies more doses given than the total course — check the entries above.";
+      } else {
+        const remaining = this.totalDoses - given;
+        this.scheduleRemainingSummary = `${remaining} dose${remaining === 1 ? "" : "s"} remaining to prescribe.`;
+      }
+
       const finalDoseDate = applyOffset(this.firstDoseDate, { unit: "t", amount: finalDayOffset });
       this.finalDoseSummary =
         `Final dose: ${formatDate(finalDoseDate)} (${dosesOnFinalDay} dose${dosesOnFinalDay === 1 ? "" : "s"} that day).`;
+    },
+
+    /**
+     * Day-by-day table version of the same schedule: one row per
+     * calendar date from the first dispense through the final dose,
+     * one column per dose slot. Each cell is "given" (already
+     * administered), "remaining" (still needs to be given, today or
+     * later), or "na" (not part of the course — either a day-1 slot
+     * that was never given and is now in the past, or a slot past the
+     * final day's shorter requirement).
+     */
+    get scheduleRows() {
+      const details = this.getScheduleDetails();
+      if (!details || details.given > this.totalDoses) return [];
+
+      const { dosesPerDay, day1Count, elapsedDays, finalDayOffset, dosesOnFinalDay } = details;
+      const rows = [];
+
+      for (let d = 0; d <= finalDayOffset; d++) {
+        const date = applyOffset(this.firstDoseDate, { unit: "t", amount: d });
+        const isPast = d < elapsedDays;
+        const slotsRequiredThisDay = d === finalDayOffset ? dosesOnFinalDay : dosesPerDay;
+
+        const cells = [];
+        if (d === 0) {
+          // Day 1: dosing started partway through the day, so the
+          // given doses are the LAST day1Count slots (chronologically
+          // latest) — earlier slots were skipped before dosing began
+          // and are permanently not applicable, not "remaining".
+          const givenFromIndex = slotsRequiredThisDay - day1Count;
+          for (let c = 1; c <= dosesPerDay; c++) {
+            cells.push(c > slotsRequiredThisDay || c <= givenFromIndex ? "na" : "given");
+          }
+        } else {
+          let givenCountThisDay;
+          if (isPast) {
+            givenCountThisDay = dosesPerDay;
+          } else if (d === elapsedDays) {
+            givenCountThisDay = this.todayDoseCount;
+          } else {
+            givenCountThisDay = 0;
+          }
+
+          for (let c = 1; c <= dosesPerDay; c++) {
+            if (c > slotsRequiredThisDay) {
+              cells.push("na");
+            } else if (c <= givenCountThisDay) {
+              cells.push("given");
+            } else {
+              cells.push(isPast ? "na" : "remaining");
+            }
+          }
+        }
+
+        rows.push({
+          key: d,
+          dateLabel: formatDate(date) + (d === elapsedDays ? " (today)" : ""),
+          cells,
+        });
+      }
+
+      return rows;
+    },
+
+    cellLabel(state) {
+      if (state === "given") return "Given";
+      if (state === "remaining") return "Remaining";
+      return "—";
+    },
+
+    cellClass(state) {
+      if (state === "given") return "table-success";
+      if (state === "remaining") return "table-warning";
+      return "";
     },
   };
 }

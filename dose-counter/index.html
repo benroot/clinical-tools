@@ -100,7 +100,7 @@
       </div>
 
       <div class="field-group" x-show="frequency !== 'qd'">
-        <label for="first-day-dose-count" class="form-label">How many doses were given that day</label>
+        <label for="first-day-dose-count" class="form-label" x-text="firstDayDoseCountLabel"></label>
         <select
           id="first-day-dose-count"
           name="first-day-dose-count"
@@ -139,6 +139,30 @@
       <output class="calc-result" x-show="finalDoseSummary" x-text="finalDoseSummary"></output>
 
     </form>
+
+    <section x-show="scheduleRows.length > 0">
+      <p class="result-label">Dose schedule</p>
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <template x-for="n in doseNumberOptions" :key="'col-' + n">
+              <th scope="col" x-text="'Dose ' + n"></th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="row in scheduleRows" :key="row.key">
+            <tr>
+              <th scope="row" x-text="row.dateLabel"></th>
+              <template x-for="(cell, index) in row.cells" :key="row.key + '-' + index">
+                <td :class="cellClass(cell)" x-text="cellLabel(cell)"></td>
+              </template>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </section>
 
   </main>
 
