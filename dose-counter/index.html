@@ -72,6 +72,34 @@
       <p class="result-value" aria-labelledby="result-label" x-text="totalDoses"></p>
     </section>
 
+    <form novalidate x-show="hasResult" @submit.prevent="calculateRemaining()">
+
+      <div class="field-group">
+        <label for="given" class="form-label">Doses already given</label>
+        <input
+          type="text"
+          id="given"
+          name="given"
+          class="form-control"
+          inputmode="numeric"
+          autocomplete="off"
+          placeholder="e.g. 3"
+          aria-describedby="given-hint"
+          x-model="givenInput"
+          @input="calculateRemaining()">
+        <div id="given-hint" class="field-hint">
+          Number of doses already administered (e.g. in the hospital).
+        </div>
+        <p
+          class="is-invalid-message text-danger mt-1"
+          x-show="givenError"
+          x-text="givenError"
+          role="alert"></p>
+        <output class="calc-result" for="given" x-show="remainingSummary" x-text="remainingSummary"></output>
+      </div>
+
+    </form>
+
   </main>
 
   <!-- Alpine.js: adds reactive behavior directly to the semantic HTML above -->

@@ -22,6 +22,9 @@ function doseCounter() {
     frequency: "qd",
     errorMessage: "",
     totalDoses: null,
+    givenInput: "",
+    givenError: "",
+    remainingSummary: "",
 
     get hasResult() {
       return this.totalDoses !== null && this.errorMessage === "";
@@ -32,16 +35,45 @@ function doseCounter() {
       this.totalDoses = null;
 
       const raw = this.daysInput.trim();
+      if (raw) {
+        const days = Number(raw);
+        if (!Number.isInteger(days) || days <= 0) {
+          this.errorMessage = "Enter the number of days as a whole number greater than 0.";
+        } else {
+          const dosesPerDay = FREQUENCY_DOSES_PER_DAY[this.frequency];
+          this.totalDoses = days * dosesPerDay;
+        }
+      }
+
+      this.calculateRemaining();
+    },
+
+    /**
+     * Iteration 2: given the total doses from calculate(), subtracts
+     * the doses already administered to find doses remaining to
+     * prescribe.
+     */
+    calculateRemaining() {
+      this.givenError = "";
+      this.remainingSummary = "";
+
+      if (!this.hasResult) return;
+
+      const raw = this.givenInput.trim();
       if (!raw) return;
 
-      const days = Number(raw);
-      if (!Number.isInteger(days) || days <= 0) {
-        this.errorMessage = "Enter the number of days as a whole number greater than 0.";
+      const given = Number(raw);
+      if (!Number.isInteger(given) || given < 0) {
+        this.givenError = "Enter the number of doses already given as a whole number, 0 or greater.";
+        return;
+      }
+      if (given > this.totalDoses) {
+        this.givenError = "Doses already given can't exceed the total doses needed.";
         return;
       }
 
-      const dosesPerDay = FREQUENCY_DOSES_PER_DAY[this.frequency];
-      this.totalDoses = days * dosesPerDay;
+      const remaining = this.totalDoses - given;
+      this.remainingSummary = `${remaining} dose${remaining === 1 ? "" : "s"} remaining to prescribe.`;
     },
   };
 }
