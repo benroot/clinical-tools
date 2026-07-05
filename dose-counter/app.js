@@ -13,6 +13,8 @@ const FREQUENCY_DOSES_PER_DAY = {
   qid: 4,
 };
 
+const DAY_ABBREVIATIONS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 /**
  * Alpine component for the Dose Counter page.
  * Exposed on window so the inline x-data="doseCounter()" call in
@@ -21,7 +23,7 @@ const FREQUENCY_DOSES_PER_DAY = {
 function doseCounter() {
   return {
     daysInput: "",
-    frequency: "qd",
+    frequency: "bid",
     errorMessage: "",
     totalDoses: null,
     firstDoseDateInput: "",
@@ -247,7 +249,7 @@ function doseCounter() {
 
         rows.push({
           key: d,
-          dateLabel: formatDate(date) + (d === elapsedDays ? " (today)" : ""),
+          dateLabel: `${formatDate(date)} ${DAY_ABBREVIATIONS[date.getDay()]}` + (d === elapsedDays ? " (today)" : ""),
           cells,
         });
       }
