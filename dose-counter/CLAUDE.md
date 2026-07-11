@@ -11,77 +11,39 @@ app does.
 
 A course of medication is defined by:
 
-- **Total days** — length of the course, in days
-- **Frequency** — doses per day: `qd` (1x), `bid` (2x), `tid` (3x), `qid` (4x)
+- **Total days** — length of the course, in days.
+- **Frequency** — doses per day: `qd` (1x), `bid` (2x), `tid` (3x), `qid`
+  (4x).
 
-These two together fix the **total doses** for the full course. Some of
-those doses have already been administered (typically in the hospital);
-subtracting those gives the **doses remaining** — the number that must
-actually be prescribed.
+These fix the **total doses** for the full course. Rather than asking the
+prescriber to type how many doses have already been given, that count is
+derived from the dosing schedule itself — when the first dose was given,
+how many doses have happened since, and how many are left.
 
-Later, instead of asking the user to state how many doses have already been
-given, the app should derive that count automatically from the timing of the
-first dose and the current date/time, per iteration 3 below.
+## How it works
 
-## Iterations
-
-### Iteration 1 — total doses from days + frequency (current focus)
-
-- Text entry for number of days (a plain number).
-- Frequency selector: `qd`, `bid`, `tid`, `qid`.
-- Compute and display total doses needed for the full course (days ×
-  doses-per-day).
-
-### Iteration 2 — subtract doses already given (superseded by iteration 3)
-
-Once total doses are established (iteration 1), add:
-
-- Numeric entry for doses already given (e.g. in the hospital).
-- Compute and display doses remaining to prescribe (total − given).
-
-This manual entry was later removed once iteration 3 could derive the same
-"doses given" count from dosing dates/times instead of a typed number — see
-3c below.
-
-### Iteration 3 — derive doses given from dose timing
-
-Replaces iteration 2's typed "doses given" count — instead of typing a
-number directly, derive it from when dosing started. Built in sequential
-sub-steps; each is confirmed working before starting the next.
-
-- **3a — date of first dispense.** Capture the calendar date the first dose
-  was given. (Done: `firstDoseDateInput` field, parsed/validated against
-  today.)
-- **3b — how many doses given that day.** For frequencies with more than one
-  dose per day (`bid`/`tid`/`qid`), capture how many doses were given on the
-  day of the first dispense (e.g. 2 of 3 for `tid`, if dosing started
-  partway through the day). For `qd` this is always 1, so no input needed.
-  (Done: `firstDayDoseCount` selector, hidden for `qd`.)
-- **3c — doses given today, and doses remaining.** No time-of-day guessing —
-  the current date is read directly (`new Date()`), and the user picks how
-  many doses have been given *today* from a dropdown (0 up to doses-per-day
-  for the selected frequency; skipped, same as 3b, when today *is* the first
-  dispense date, since 3b already covers that day). Total doses given =
-  day-1 count (3b, or 1 for `qd`) + full doses-per-day for every intervening
-  calendar day between the first dispense date and today (exclusive of both
-  ends) + today's dropdown count. Doses remaining = total doses (iteration
-  1) − doses given. (Done: `todayDoseCount` selector, `computeSchedule()`.)
-- **3d — final dose date.** Using the same day-1 count and doses-per-day,
-  project forward from the first dispense date — day 1 partial, every day
-  after at a full doses-per-day — to find the calendar date cumulative
-  doses reach the course total, and how many doses fall on that last day
-  (which may be less than a full doses-per-day if day 1 was short). This is
-  independent of "today" — it only depends on the first-dispense info and
-  the course total, so it can display as soon as those are set. (Done:
-  `finalDoseSummary`, computed alongside 3c in `computeSchedule()`.)
-- **3e — full dose-schedule table.** A day-by-day table view of the same
-  schedule as 3c/3d: one row per calendar date from the first dispense
-  through the final dose, one column per dose slot for the current
-  frequency. Each cell is given / remaining / not applicable (a slot past
-  the final day's shorter requirement, or — on day 1 specifically — a slot
-  before dosing began). On day 1, a partial count fills from the *last*
-  slot backwards (dosing started partway through the day, so the earliest
-  slot(s) were skipped, not the latest); every other day fills from the
-  first slot forward as the day progresses. Renders the full date range, no
-  truncation. (Done: `scheduleRows` getter, sharing `getScheduleDetails()`
-  with `computeSchedule()`.)
+- **Total doses** = days × doses-per-day for the selected frequency.
+- **Day 1** is anchored by the first-dispense date. For `bid`/`tid`/`qid`,
+  the prescriber also picks how many doses were given on that first day
+  (dosing may start partway through a day); for `qd` it's always 1, no
+  input needed.
+- **Every full day** between day 1 and today counts as a full day's doses.
+  **Today** gets its own "how many given today" dropdown — skipped when
+  today *is* day 1, since day 1's count already covers it.
+- **Doses remaining** = total doses − doses given so far, recomputed live
+  as any input changes. An error shows if the schedule implies more doses
+  given than the total course (`getScheduleDetails()` / `computeSchedule()`
+  in `app.js`).
+- **Final dose** — projecting forward from day 1 (day 1 partial, every day
+  after a full doses-per-day) finds the calendar date cumulative doses
+  reach the course total, and how many fall on that last day (which can be
+  short if day 1 was short).
+- **Schedule table** (`scheduleRows`) shows this same math day-by-day: one
+  row per calendar date (full range, no truncation), one column per dose
+  slot, each cell given / remaining / not-applicable. Day 1 fills from the
+  *last* slot backward (earlier slots were skipped before dosing began);
+  every other day fills from the first slot forward as the day progresses.
+- Date fields accept `MM/DD/YYYY`, an offset like `t-5`/`w`/`m`/`y`, or the
+  literal `today` — all via the shared `resolveDateField` (see
+  [`shared/date-utils.js`](../shared/date-utils.js)), same as every other
+  app in this repo.
