@@ -73,7 +73,13 @@ added (see iterations).
 - Independent app-level stylesheet to refine look and feel, layered on
   Bootstrap + `shared/style.css` per root principle 3.
 - A "copy dosing table" action that formats the table in a way suitable for
-  pasting into patient instructions in a medical record.
+  pasting into patient instructions in a medical record. Possible
+  refinements to that copyable table, not yet scoped:
+  - Tailor it to patient preference of pounds (lb) as the weight unit,
+    rather than always showing kg.
+  - Round doses/volumes to avoid decimal mL amounts (e.g. caregiver-friendly
+    whole or half-mL increments), trading a bit of dosing precision for a
+    number that's easier to measure and communicate.
 - Add ibuprofen support: same guidelines-simplification + dosing-table +
   calculator pattern as Tylenol, plus UI to switch between the two
   medications. When this lands, revisit whether medication-config or
