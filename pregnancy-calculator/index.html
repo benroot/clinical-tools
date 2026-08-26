@@ -52,6 +52,26 @@
           role="alert"></p>
       </div>
 
+      <div class="field-group">
+        <label for="ga-as-of-input" class="form-label">Gestational age was as of (optional)</label>
+        <input
+          type="text"
+          id="ga-as-of-input"
+          name="ga-as-of-input"
+          class="form-control"
+          inputmode="text"
+          autocomplete="off"
+          placeholder="MM/DD/YYYY"
+          aria-describedby="ga-as-of-input-hint"
+          x-model="gaAsOfInput"
+          @input="calculate()">
+        <div id="ga-as-of-input-hint" class="field-hint">
+          If the gestational age above was measured on a past date rather
+          than today — e.g. from a prior visit — enter that date here to
+          calculate the LMP and due date from it.
+        </div>
+      </div>
+
     </form>
 
     <section

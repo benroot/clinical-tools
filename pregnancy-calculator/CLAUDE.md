@@ -29,6 +29,15 @@ entered from its format:
 | `MM/DD/YYYY`, date is today or in the past | `03/10/2026` | LMP |
 | `MM/DD/YYYY`, date is in the future | `12/01/2026` | EDD |
 
+**Optional GA reference date.** A GA entry (`XwYd`) is normally read as of
+today. A subsidiary "Gestational age was as of" field (blank by default)
+lets it instead be anchored to a past date — e.g. "8w0d as of 6/1/2026" — so
+a pregnancy can be established from a GA that was known at a prior visit
+rather than one measured right now. Leaving it blank preserves the default
+as-of-today behavior. It only applies when the main box holds a GA; entering
+it alongside an LMP or EDD date is treated as an error, since it has no
+established meaning there.
+
 **Open/future enhancement:** a date-only entry that is in the past is always
 treated as LMP under this rule, even though a past date could, in rare cases,
 represent an EDD for a pregnancy that has already fully concluded (e.g.

@@ -28,26 +28,30 @@ const TRIMESTER_DAY_RANGES = [
 /**
  * Resolves the single establishing input into an LMP date. Accepts,
  * in order: a weeks+days gestational age (e.g. "18w3d", relative to
- * today), or a literal MM/DD/YYYY date — interpreted as the LMP if
- * it's today or earlier, or as the EDD (and backed out to an LMP) if
- * it's in the future.
+ * gaReferenceDate), or a literal MM/DD/YYYY date — interpreted as the
+ * LMP if it's today or earlier, or as the EDD (and backed out to an
+ * LMP) if it's in the future.
  *
  * A past/today date is always treated as LMP, even though a past
  * date could in rare cases represent the EDD of an already-concluded
  * pregnancy. That case is out of scope for now (see CLAUDE.md).
  *
  * @param {string} rawValue
- * @param {Date} today
+ * @param {Date} today - actual current date; used for the LMP/EDD
+ *   future-date heuristic, and as the default GA reference date.
+ * @param {Date} [gaReferenceDate] - date the GA (if that's what was
+ *   entered) is measured as of. Defaults to today, but can be a past
+ *   date to establish an LMP from a historical GA reading.
  * @returns {Date|null}
  */
-function resolveLmpFromInput(rawValue, today) {
+function resolveLmpFromInput(rawValue, today, gaReferenceDate) {
   const raw = (rawValue || "").trim();
   if (!raw) return null;
 
   const ga = parseWeeksAndDays(raw);
   if (ga) {
     const gaDays = ga.weeks * 7 + ga.days;
-    return applyOffset(today, { unit: "t", amount: -gaDays });
+    return applyOffset(gaReferenceDate || today, { unit: "t", amount: -gaDays });
   }
 
   const date = parseDate(raw);
@@ -69,6 +73,7 @@ function resolveLmpFromInput(rawValue, today) {
 function pregnancyCalculator() {
   return {
     rawInput: "8w",
+    gaAsOfInput: "",
     errorMessage: "",
     lmp: null,
     lmpDisplay: "",
@@ -97,7 +102,28 @@ function pregnancyCalculator() {
       if (!this.rawInput.trim()) return;
 
       const today = new Date();
-      const lmp = resolveLmpFromInput(this.rawInput, today);
+      const rawGaAsOf = this.gaAsOfInput.trim();
+      let gaReferenceDate = today;
+
+      if (rawGaAsOf) {
+        const asOfDate = parseDate(rawGaAsOf);
+        if (!asOfDate) {
+          this.errorMessage = "Enter the gestational-age reference date as MM/DD/YYYY.";
+          return;
+        }
+        if (asOfDate > today) {
+          this.errorMessage = "The gestational-age reference date can't be in the future.";
+          return;
+        }
+        if (!parseWeeksAndDays(this.rawInput.trim())) {
+          this.errorMessage =
+            "The gestational-age reference date only applies when the field above is a gestational age like 18w3d.";
+          return;
+        }
+        gaReferenceDate = asOfDate;
+      }
+
+      const lmp = resolveLmpFromInput(this.rawInput, today, gaReferenceDate);
       if (!lmp) {
         this.errorMessage =
           "Enter the LMP or due date as MM/DD/YYYY, or the current gestational age like 18w3d.";
