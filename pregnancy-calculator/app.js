@@ -15,6 +15,11 @@
 
 const DAYS_IN_FULL_TERM_PREGNANCY = 280; // 40 weeks from LMP
 
+// Not a hard cap — past this, today's GA is shown along with a note that
+// this may be a prior, already-concluded pregnancy (e.g. someone looking
+// up when a medication was started last time), rather than being blocked.
+const PAST_TERM_NOTE_THRESHOLD_DAYS = 42 * 7; // 294
+
 // Day-count ranges (inclusive, days since LMP) for each trimester.
 // Boundaries land on whole-week marks: trimester 1 covers GA weeks
 // 0-13, trimester 2 covers weeks 14-27, trimester 3 covers weeks
@@ -26,43 +31,53 @@ const TRIMESTER_DAY_RANGES = [
 ];
 
 /**
- * Resolves the single establishing input into an LMP date. Accepts,
- * in order: a weeks+days gestational age (e.g. "18w3d", relative to
- * gaReferenceDate), or a literal MM/DD/YYYY date — interpreted as the
- * LMP if it's today or earlier, or as the EDD (and backed out to an
- * LMP) if it's in the future.
- *
- * A past/today date is always treated as LMP, even though a past
- * date could in rare cases represent the EDD of an already-concluded
- * pregnancy. That case is out of scope for now (see CLAUDE.md).
- *
- * @param {string} rawValue
- * @param {Date} today - actual current date; used for the LMP/EDD
- *   future-date heuristic, and as the default GA reference date.
- * @param {Date} [gaReferenceDate] - date the GA (if that's what was
- *   entered) is measured as of. Defaults to today, but can be a past
- *   date to establish an LMP from a historical GA reading.
+ * Resolves an LMP-mode input: a literal MM/DD/YYYY date, taken as-is.
+ * @param {string} raw
  * @returns {Date|null}
  */
-function resolveLmpFromInput(rawValue, today, gaReferenceDate) {
-  const raw = (rawValue || "").trim();
-  if (!raw) return null;
+function resolveLmpFromLmpInput(raw) {
+  return parseDate(raw);
+}
 
-  const ga = parseWeeksAndDays(raw);
-  if (ga) {
-    const gaDays = ga.weeks * 7 + ga.days;
-    return applyOffset(gaReferenceDate || today, { unit: "t", amount: -gaDays });
-  }
+/**
+ * Resolves an EDD-mode input into an LMP by backing out 280 days
+ * from the parsed due date.
+ * @param {string} raw
+ * @returns {Date|null}
+ */
+function resolveLmpFromEddInput(raw) {
+  const edd = parseDate(raw);
+  if (!edd) return null;
+  return applyOffset(edd, { unit: "t", amount: -DAYS_IN_FULL_TERM_PREGNANCY });
+}
 
-  const date = parseDate(raw);
-  if (date) {
-    if (date > today) {
-      return applyOffset(date, { unit: "t", amount: -DAYS_IN_FULL_TERM_PREGNANCY });
-    }
-    return date;
-  }
+/**
+ * Parses a non-negative whole number from text (no sign, no decimal).
+ * @param {string} raw
+ * @returns {number|null}
+ */
+function parseNonNegativeInt(raw) {
+  const trimmed = (raw || "").trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  return Number(trimmed);
+}
 
-  return null;
+/**
+ * Resolves a GA-mode input (separate weeks/days fields) into an LMP,
+ * measured as of gaReferenceDate (defaults to today).
+ * @param {string} weeksRaw
+ * @param {string} daysRaw
+ * @param {Date} today
+ * @param {Date} [gaReferenceDate]
+ * @returns {Date|null}
+ */
+function resolveLmpFromGaInput(weeksRaw, daysRaw, today, gaReferenceDate) {
+  const weeks = parseNonNegativeInt(weeksRaw);
+  const days = parseNonNegativeInt(daysRaw);
+  if (weeks === null || days === null) return null;
+
+  const gaDays = weeks * 7 + days;
+  return applyOffset(gaReferenceDate || today, { unit: "t", amount: -gaDays });
 }
 
 /**
@@ -72,9 +87,14 @@ function resolveLmpFromInput(rawValue, today, gaReferenceDate) {
  */
 function pregnancyCalculator() {
   return {
-    rawInput: "8w",
+    mode: "ga",
+    lmpDateInput: "",
+    eddDateInput: "",
+    gaWeeksInput: "8",
+    gaDaysInput: "0",
     gaAsOfInput: "",
     errorMessage: "",
+    pastTermNote: "",
     lmp: null,
     lmpDisplay: "",
     gaDisplay: "",
@@ -90,6 +110,7 @@ function pregnancyCalculator() {
 
     calculate() {
       this.errorMessage = "";
+      this.pastTermNote = "";
       this.lmp = null;
       this.lmpDisplay = "";
       this.gaDisplay = "";
@@ -99,43 +120,63 @@ function pregnancyCalculator() {
       this.secondaryError = "";
       this.secondaryResult = "";
 
-      if (!this.rawInput.trim()) return;
-
       const today = new Date();
-      const rawGaAsOf = this.gaAsOfInput.trim();
-      let gaReferenceDate = today;
+      let lmp = null;
 
-      if (rawGaAsOf) {
-        const asOfDate = parseDate(rawGaAsOf);
-        if (!asOfDate) {
-          this.errorMessage = "Enter the gestational-age reference date as MM/DD/YYYY.";
+      if (this.mode === "lmp") {
+        const raw = this.lmpDateInput.trim();
+        if (!raw) return;
+        lmp = resolveLmpFromLmpInput(raw);
+        if (!lmp) {
+          this.errorMessage = "Enter the LMP as MM/DD/YYYY.";
           return;
         }
-        if (asOfDate > today) {
-          this.errorMessage = "The gestational-age reference date can't be in the future.";
+      } else if (this.mode === "edd") {
+        const raw = this.eddDateInput.trim();
+        if (!raw) return;
+        lmp = resolveLmpFromEddInput(raw);
+        if (!lmp) {
+          this.errorMessage = "Enter the due date as MM/DD/YYYY.";
           return;
         }
-        if (!parseWeeksAndDays(this.rawInput.trim())) {
-          this.errorMessage =
-            "The gestational-age reference date only applies when the field above is a gestational age like 18w3d.";
+      } else {
+        const weeksRaw = this.gaWeeksInput.trim();
+        const daysRaw = this.gaDaysInput.trim();
+        if (!weeksRaw || !daysRaw) return;
+
+        let gaReferenceDate = today;
+        const rawGaAsOf = this.gaAsOfInput.trim();
+        if (rawGaAsOf) {
+          const asOfDate = parseDate(rawGaAsOf);
+          if (!asOfDate) {
+            this.errorMessage = "Enter the date this gestational age was measured as MM/DD/YYYY.";
+            return;
+          }
+          if (asOfDate > today) {
+            this.errorMessage = "The date this was measured can't be in the future.";
+            return;
+          }
+          gaReferenceDate = asOfDate;
+        }
+
+        lmp = resolveLmpFromGaInput(weeksRaw, daysRaw, today, gaReferenceDate);
+        if (!lmp) {
+          this.errorMessage = "Enter the gestational age as whole numbers of weeks and days.";
           return;
         }
-        gaReferenceDate = asOfDate;
       }
 
-      const lmp = resolveLmpFromInput(this.rawInput, today, gaReferenceDate);
-      if (!lmp) {
-        this.errorMessage =
-          "Enter the LMP or due date as MM/DD/YYYY, or the current gestational age like 18w3d.";
+      const gaDaysToday = daysBetween(lmp, today);
+      if (gaDaysToday < 0) {
+        this.errorMessage = "That would put the last menstrual period in the future.";
         return;
       }
-      if (lmp > today) {
-        this.errorMessage = "The last menstrual period can't be in the future.";
-        return;
+      if (gaDaysToday > PAST_TERM_NOTE_THRESHOLD_DAYS) {
+        this.pastTermNote =
+          "This works out to more than 42 weeks along as of today. If you're looking up dates from a pregnancy that has already concluded, the dates below (and Step 2) are still calculated from this LMP.";
       }
 
       const edd = applyOffset(lmp, { unit: "t", amount: DAYS_IN_FULL_TERM_PREGNANCY });
-      const gaDaysToday = daysBetween(lmp, today);
 
       this.lmp = lmp;
       this.lmpDisplay = formatDate(lmp);

@@ -18,39 +18,46 @@ the other two:
 Once any one is known, the other two are derived and all three become fixed
 reference points for the rest of the session.
 
-## Single-box input parsing
+## Mode-based input
 
-One text box accepts any of the three parameters and infers which one was
-entered from its format:
+A radio group ("What do you know?" — LMP / Due date / Current GA) picks
+which of the three parameters is being entered, driving which field(s) are
+shown and how they're resolved. This replaced an earlier single freeform
+text box that inferred the parameter from the string's format; explicit
+mode selection removed the ambiguity that approach had around a past-dated
+entry (it could only ever mean LMP under the old heuristic, even though a
+past date can, in rare cases, be an EDD for an already-concluded pregnancy —
+that's no longer ambiguous, since the user states the mode directly).
 
-| Format | Example | Interpreted as |
+| Mode | Field(s) | Resolved as |
 |---|---|---|
-| `XwYd`, `XwY` (trailing `d` optional), or `Xw` (days default to 0) | `18w3d`, `18w3`, `12w` | GA as of today |
-| `MM/DD/YYYY`, date is today or in the past | `03/10/2026` | LMP |
-| `MM/DD/YYYY`, date is in the future | `12/01/2026` | EDD |
+| LMP | one `MM/DD/YYYY` field | LMP, taken as-is |
+| Due date | one `MM/DD/YYYY` field | EDD, backed out 280 days to LMP |
+| Current GA | Weeks + Days (two small text fields, numeric) | GA as of today (or "measured on", below), backed out to LMP |
 
-**Optional GA reference date.** A GA entry (`XwYd`) is normally read as of
-today. A subsidiary "Gestational age was as of" field (blank by default)
-lets it instead be anchored to a past date — e.g. "8w0d as of 6/1/2026" — so
-a pregnancy can be established from a GA that was known at a prior visit
-rather than one measured right now. Leaving it blank preserves the default
-as-of-today behavior. It only applies when the main box holds a GA; entering
-it alongside an LMP or EDD date is treated as an error, since it has no
-established meaning there.
+**"Measured on this date" (Current GA mode only).** Blank by default,
+meaning the entered GA is as of today. Filling it anchors the GA to a past
+date instead — e.g. "8w0d, measured on 6/1/2026" — so a pregnancy can be
+established from a GA known at a prior visit. This field is only shown in
+Current GA mode (hidden, not merely disabled, in the other two modes),
+since it has no meaning there.
 
-**Open/future enhancement:** a date-only entry that is in the past is always
-treated as LMP under this rule, even though a past date could, in rare cases,
-represent an EDD for a pregnancy that has already fully concluded (e.g.
-back-calculating historical dates for a birth that already happened). This
-edge case is intentionally out of scope for now — the past/future heuristic
-above is the accepted rule — but a later iteration could add an explicit way
-to force "treat this past date as EDD" if a real need for it shows up.
+**Validity check.** After resolving the LMP (regardless of mode), a future
+LMP is always a hard error — that's a logical impossibility regardless of
+what the tool is being used for. There's deliberately no upper bound on how
+far in the past the LMP can be: this tool is also used to look up dates
+within a pregnancy that has already concluded (e.g. "what date was aspirin
+started last time?"), where today's GA being past 42 weeks is expected, not
+a mistake. Past `PAST_TERM_NOTE_THRESHOLD_DAYS` (42 weeks, in `app.js`),
+calculation proceeds as normal and a non-blocking note is shown suggesting
+this may be a prior pregnancy — everything below it, including Step 2, still
+works off the resolved LMP.
 
 ## Iterations
 
 ### Iteration 1 — establish and display the three parameters (done)
 
-- Single input box; parse as LMP, GA, or EDD per the table above.
+- Mode-based input; parse as LMP, GA, or EDD per the table above.
 - Once a valid value is parsed, compute and display all three: **LMP**, **GA
   (as of today)**, **EDD**.
 - Display the date boundaries of each trimester for this specific pregnancy

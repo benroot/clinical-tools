@@ -26,119 +26,212 @@
       </p>
     </header>
 
-    <form novalidate @submit.prevent="calculate()">
-
-      <div class="field-group">
-        <label for="pregnancy-input" class="form-label">LMP, gestational age, or due date</label>
-        <input
-          type="text"
-          id="pregnancy-input"
-          name="pregnancy-input"
-          class="form-control"
-          inputmode="text"
-          autocomplete="off"
-          placeholder="MM/DD/YYYY or a gestational age like 18w3d"
-          aria-describedby="pregnancy-input-hint"
-          x-model="rawInput"
-          @input="calculate()">
-        <div id="pregnancy-input-hint" class="field-hint">
-          Enter the LMP or due date as MM/DD/YYYY, or the current gestational
-          age as weeks and days, e.g. 18w3d.
-        </div>
-        <p
-          class="is-invalid-message text-danger mt-1"
-          x-show="errorMessage"
-          x-text="errorMessage"
-          role="alert"></p>
+    <section class="card mb-4" aria-labelledby="step1-heading">
+      <div class="card-header">
+        <h2 id="step1-heading" class="h5 mb-0">Step 1: Set this pregnancy's dates</h2>
       </div>
+      <div class="card-body">
 
-      <div class="field-group">
-        <label for="ga-as-of-input" class="form-label">Gestational age was as of (optional)</label>
-        <input
-          type="text"
-          id="ga-as-of-input"
-          name="ga-as-of-input"
-          class="form-control"
-          inputmode="text"
-          autocomplete="off"
-          placeholder="MM/DD/YYYY"
-          aria-describedby="ga-as-of-input-hint"
-          x-model="gaAsOfInput"
-          @input="calculate()">
-        <div id="ga-as-of-input-hint" class="field-hint">
-          If the gestational age above was measured on a past date rather
-          than today — e.g. from a prior visit — enter that date here to
-          calculate the LMP and due date from it.
-        </div>
+        <form novalidate @submit.prevent="calculate()">
+
+          <fieldset class="field-group">
+            <legend class="form-label">What do you know?</legend>
+            <div class="btn-group" role="group" aria-label="What do you know?">
+              <input
+                type="radio" class="btn-check" name="mode" id="mode-lmp"
+                value="lmp" autocomplete="off" x-model="mode" @change="calculate()">
+              <label class="btn btn-outline-primary" for="mode-lmp">LMP</label>
+
+              <input
+                type="radio" class="btn-check" name="mode" id="mode-edd"
+                value="edd" autocomplete="off" x-model="mode" @change="calculate()">
+              <label class="btn btn-outline-primary" for="mode-edd">Due date</label>
+
+              <input
+                type="radio" class="btn-check" name="mode" id="mode-ga"
+                value="ga" autocomplete="off" x-model="mode" @change="calculate()">
+              <label class="btn btn-outline-primary" for="mode-ga">Current GA</label>
+            </div>
+          </fieldset>
+
+          <div class="field-group" x-show="mode === 'lmp'">
+            <label for="lmp-date-input" class="form-label">Last menstrual period (LMP)</label>
+            <input
+              type="text"
+              id="lmp-date-input"
+              name="lmp-date-input"
+              class="form-control"
+              inputmode="text"
+              autocomplete="off"
+              placeholder="MM/DD/YYYY"
+              aria-describedby="lmp-date-input-hint"
+              x-model="lmpDateInput"
+              @input="calculate()">
+            <div id="lmp-date-input-hint" class="field-hint">Format: MM/DD/YYYY.</div>
+          </div>
+
+          <div class="field-group" x-show="mode === 'edd'">
+            <label for="edd-date-input" class="form-label">Due date</label>
+            <input
+              type="text"
+              id="edd-date-input"
+              name="edd-date-input"
+              class="form-control"
+              inputmode="text"
+              autocomplete="off"
+              placeholder="MM/DD/YYYY"
+              aria-describedby="edd-date-input-hint"
+              x-model="eddDateInput"
+              @input="calculate()">
+            <div id="edd-date-input-hint" class="field-hint">Format: MM/DD/YYYY.</div>
+          </div>
+
+          <div class="field-group" x-show="mode === 'ga'">
+            <span class="form-label" id="ga-input-label">Current gestational age</span>
+            <div class="row g-2" role="group" aria-labelledby="ga-input-label">
+              <div class="col-6">
+                <label for="ga-weeks-input" class="form-label">Weeks</label>
+                <input
+                  type="text"
+                  id="ga-weeks-input"
+                  name="ga-weeks-input"
+                  class="form-control"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  x-model="gaWeeksInput"
+                  @input="calculate()">
+              </div>
+              <div class="col-6">
+                <label for="ga-days-input" class="form-label">Days</label>
+                <input
+                  type="text"
+                  id="ga-days-input"
+                  name="ga-days-input"
+                  class="form-control"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  x-model="gaDaysInput"
+                  @input="calculate()">
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group" x-show="mode === 'ga'">
+            <label for="ga-as-of-input" class="form-label">Measured on this date (if not today)</label>
+            <input
+              type="text"
+              id="ga-as-of-input"
+              name="ga-as-of-input"
+              class="form-control"
+              inputmode="text"
+              autocomplete="off"
+              placeholder="MM/DD/YYYY"
+              aria-describedby="ga-as-of-input-hint"
+              x-model="gaAsOfInput"
+              @input="calculate()">
+            <div id="ga-as-of-input-hint" class="field-hint">
+              If the gestational age above was measured on a past date rather
+              than today — e.g. from a prior visit — enter that date here.
+            </div>
+          </div>
+
+          <p
+            class="is-invalid-message text-danger mt-1"
+            x-show="errorMessage"
+            x-text="errorMessage"
+            role="alert"></p>
+
+        </form>
+
+        <section
+          class="result-panel mt-3"
+          aria-live="polite"
+          aria-atomic="true"
+          :hidden="!hasResult">
+
+          <dl>
+            <dt>Last menstrual period (LMP)</dt>
+            <dd x-text="lmpDisplay"></dd>
+
+            <dt>Gestational age (today)</dt>
+            <dd x-text="gaDisplay"></dd>
+
+            <dt>Estimated due date (EDD)</dt>
+            <dd x-text="eddDisplay"></dd>
+          </dl>
+
+          <p
+            class="field-hint fst-italic"
+            x-show="pastTermNote"
+            x-text="pastTermNote"></p>
+
+          <p class="result-label">Trimesters</p>
+          <ul>
+            <template x-for="trimester in trimesters" :key="trimester.label">
+              <li><span x-text="trimester.label"></span>: <span x-text="trimester.rangeLabel"></span></li>
+            </template>
+          </ul>
+        </section>
+
+        <p class="field-hint mt-3">
+          Estimate based on Naegele's Rule (LMP + 280 days / 40 weeks), which
+          assumes a 28-day cycle. A care provider may adjust this based on
+          ultrasound dating or a known cycle length.
+        </p>
+
       </div>
-
-    </form>
-
-    <section
-      class="result-panel"
-      aria-live="polite"
-      :hidden="!hasResult">
-
-      <dl>
-        <dt>Last menstrual period (LMP)</dt>
-        <dd x-text="lmpDisplay"></dd>
-
-        <dt>Gestational age (today)</dt>
-        <dd x-text="gaDisplay"></dd>
-
-        <dt>Estimated due date (EDD)</dt>
-        <dd x-text="eddDisplay"></dd>
-      </dl>
-
-      <p class="result-label">Trimesters</p>
-      <ul>
-        <template x-for="trimester in trimesters" :key="trimester.label">
-          <li><span x-text="trimester.label"></span>: <span x-text="trimester.rangeLabel"></span></li>
-        </template>
-      </ul>
     </section>
 
-    <form novalidate x-show="hasResult" @submit.prevent="calculateSecondary()">
-
-      <div class="field-group">
-        <label for="secondary-input" class="form-label">Look up a date or gestational age</label>
-        <input
-          type="text"
-          id="secondary-input"
-          name="secondary-input"
-          class="form-control"
-          inputmode="text"
-          autocomplete="off"
-          placeholder="MM/DD/YYYY or a gestational age like 20w0d"
-          aria-describedby="secondary-input-hint"
-          x-model="secondaryInput"
-          @input="calculateSecondary()">
-        <div id="secondary-input-hint" class="field-hint">
-          Enter a gestational age (e.g. 20w0d) to find its calendar date, or a
-          date (MM/DD/YYYY) to find the gestational age on that date, for
-          this pregnancy.
-        </div>
-        <p
-          class="is-invalid-message text-danger mt-1"
-          x-show="secondaryError"
-          x-text="secondaryError"
-          role="alert"></p>
+    <section class="card" aria-labelledby="step2-heading" x-show="hasResult">
+      <div class="card-header">
+        <h2 id="step2-heading" class="h5 mb-0">Step 2: Look up a date or gestational age (optional)</h2>
       </div>
+      <div class="card-body">
 
-    </form>
+        <p class="field-hint">
+          Using the due date above, find the calendar date for a gestational
+          age, or the gestational age on a given date.
+        </p>
 
-    <section
-      class="result-panel"
-      aria-live="polite"
-      :hidden="!secondaryResult">
-      <output class="calc-result" for="secondary-input" x-text="secondaryResult"></output>
+        <form novalidate @submit.prevent="calculateSecondary()">
+
+          <div class="field-group">
+            <label for="secondary-input" class="form-label">Date or gestational age to look up</label>
+            <input
+              type="text"
+              id="secondary-input"
+              name="secondary-input"
+              class="form-control"
+              inputmode="text"
+              autocomplete="off"
+              placeholder="MM/DD/YYYY or a gestational age like 20w0d"
+              aria-describedby="secondary-input-hint"
+              x-model="secondaryInput"
+              @input="calculateSecondary()">
+            <div id="secondary-input-hint" class="field-hint">
+              Enter a gestational age (e.g. 20w0d) to find its calendar date, or a
+              date (MM/DD/YYYY) to find the gestational age on that date, for
+              this pregnancy.
+            </div>
+            <p
+              class="is-invalid-message text-danger mt-1"
+              x-show="secondaryError"
+              x-text="secondaryError"
+              role="alert"></p>
+          </div>
+
+        </form>
+
+        <section
+          class="result-panel"
+          aria-live="polite"
+          aria-atomic="true"
+          :hidden="!secondaryResult">
+          <output class="calc-result" for="secondary-input" x-text="secondaryResult"></output>
+        </section>
+
+      </div>
     </section>
-
-    <p class="field-hint mt-3">
-      Estimate based on Naegele's Rule (LMP + 280 days / 40 weeks), which
-      assumes a 28-day cycle. A care provider may adjust this based on
-      ultrasound dating or a known cycle length.
-    </p>
 
     <hr class="mt-5">
 
