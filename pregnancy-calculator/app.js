@@ -20,6 +20,16 @@ const DAYS_IN_FULL_TERM_PREGNANCY = 280; // 40 weeks from LMP
 // up when a medication was started last time), rather than being blocked.
 const PAST_TERM_NOTE_THRESHOLD_DAYS = 42 * 7; // 294
 
+const FUTURE_LMP_NOTE =
+  "This LMP is in the future. The dates below (and Step 2) are calculated " +
+  "as if it starts as planned — useful for pregnancy planning around a " +
+  "conception that hasn't happened yet.";
+
+const PAST_TERM_NOTE =
+  "This works out to more than 42 weeks along as of today. If you're " +
+  "looking up dates from a pregnancy that has already concluded, the " +
+  "dates below (and Step 2) are still calculated from this LMP.";
+
 // Day-count ranges (inclusive, days since LMP) for each trimester.
 // Boundaries land on whole-week marks: trimester 1 covers GA weeks
 // 0-13, trimester 2 covers weeks 14-27, trimester 3 covers weeks
@@ -94,7 +104,7 @@ function pregnancyCalculator() {
     gaDaysInput: "0",
     gaAsOfInput: "",
     errorMessage: "",
-    pastTermNote: "",
+    timelineNote: "",
     lmp: null,
     lmpDisplay: "",
     gaDisplay: "",
@@ -110,7 +120,7 @@ function pregnancyCalculator() {
 
     calculate() {
       this.errorMessage = "";
-      this.pastTermNote = "";
+      this.timelineNote = "";
       this.lmp = null;
       this.lmpDisplay = "";
       this.gaDisplay = "";
@@ -167,13 +177,13 @@ function pregnancyCalculator() {
       }
 
       const gaDaysToday = daysBetween(lmp, today);
+      let gaDisplay;
       if (gaDaysToday < 0) {
-        this.errorMessage = "That would put the last menstrual period in the future.";
-        return;
-      }
-      if (gaDaysToday > PAST_TERM_NOTE_THRESHOLD_DAYS) {
-        this.pastTermNote =
-          "This works out to more than 42 weeks along as of today. If you're looking up dates from a pregnancy that has already concluded, the dates below (and Step 2) are still calculated from this LMP.";
+        this.timelineNote = FUTURE_LMP_NOTE;
+        gaDisplay = `Not yet — starts in ${formatWeeksAndDays(-gaDaysToday)}`;
+      } else {
+        if (gaDaysToday > PAST_TERM_NOTE_THRESHOLD_DAYS) this.timelineNote = PAST_TERM_NOTE;
+        gaDisplay = formatWeeksAndDays(gaDaysToday);
       }
 
       const edd = applyOffset(lmp, { unit: "t", amount: DAYS_IN_FULL_TERM_PREGNANCY });
@@ -181,7 +191,7 @@ function pregnancyCalculator() {
       this.lmp = lmp;
       this.lmpDisplay = formatDate(lmp);
       this.eddDisplay = formatDate(edd);
-      this.gaDisplay = formatWeeksAndDays(gaDaysToday);
+      this.gaDisplay = gaDisplay;
 
       this.trimesters = TRIMESTER_DAY_RANGES.map((range) => ({
         label: range.label,

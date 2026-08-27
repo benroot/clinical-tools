@@ -42,16 +42,26 @@ established from a GA known at a prior visit. This field is only shown in
 Current GA mode (hidden, not merely disabled, in the other two modes),
 since it has no meaning there.
 
-**Validity check.** After resolving the LMP (regardless of mode), a future
-LMP is always a hard error — that's a logical impossibility regardless of
-what the tool is being used for. There's deliberately no upper bound on how
-far in the past the LMP can be: this tool is also used to look up dates
-within a pregnancy that has already concluded (e.g. "what date was aspirin
-started last time?"), where today's GA being past 42 weeks is expected, not
-a mistake. Past `PAST_TERM_NOTE_THRESHOLD_DAYS` (42 weeks, in `app.js`),
-calculation proceeds as normal and a non-blocking note is shown suggesting
-this may be a prior pregnancy — everything below it, including Step 2, still
-works off the resolved LMP.
+**No hard bounds on the LMP.** This tool supports three timelines, not just
+a currently-ongoing pregnancy, so the LMP is never rejected purely for being
+far in the past or in the future — the resolved LMP, EDD, trimesters, and
+Step 2 all keep working the same way regardless:
+
+- **Normal** — LMP in the past, today's GA within 0–42 weeks. No note shown.
+- **Prior/concluded pregnancy** — LMP far enough in the past that today's GA
+  exceeds `PAST_TERM_NOTE_THRESHOLD_DAYS` (42 weeks, in `app.js`), e.g.
+  looking up when a medication was started last pregnancy. A note suggests
+  this may be a past pregnancy; "Gestational age (today)" is still shown
+  (however large) since it's a real elapsed duration.
+- **Planning ahead** — LMP in the future (a planned/expected next period),
+  used to project an EDD before conception has happened. A note explains
+  this, and "Gestational age (today)" reads "Not yet — starts in `Xw Yd`"
+  instead of a duration, since gestational age isn't defined before the LMP.
+
+Both notes populate the same `timelineNote` field (mutually exclusive, so
+one field is enough); malformed dates and the GA-mode "measured on" date
+being in the future are still hard errors — those are input problems, not
+a timeline this tool intentionally supports.
 
 ## Iterations
 
