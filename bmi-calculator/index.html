@@ -42,7 +42,6 @@
               autocomplete="off"
               aria-describedby="weight-unit-status weight-hint weight-error"
               :aria-invalid="weightError ? 'true' : 'false'"
-              :readonly="!!baseline"
               x-ref="weightInput"
               x-model="weightInput"
               @input="syncWeightUnit()">
@@ -50,7 +49,6 @@
               id="weight-unit"
               class="form-select"
               aria-label="Weight unit"
-              :disabled="!!baseline"
               x-model="weightUnit"
               @change="syncWeightUnit()">
               <option value="">Unit</option>
@@ -74,7 +72,6 @@
               autocomplete="off"
               aria-describedby="height-unit-status height-hint height-error"
               :aria-invalid="heightError ? 'true' : 'false'"
-              :readonly="!!baseline"
               x-ref="heightInput"
               x-model="heightInput"
               @input="syncHeightUnit()">
@@ -82,7 +79,6 @@
               id="height-unit"
               class="form-select"
               aria-label="Height unit"
-              :disabled="!!baseline"
               x-model="heightUnit"
               @change="syncHeightUnit()">
               <option value="">Unit</option>
@@ -106,19 +102,21 @@
             class="form-control"
             inputmode="decimal"
             autocomplete="off"
-            aria-describedby="bmi-hint bmi-error"
+            aria-describedby="bmi-computed bmi-hint bmi-error"
             :aria-invalid="bmiError ? 'true' : 'false'"
             :readonly="!!baseline"
             x-ref="bmiInput"
             x-model="bmiInput"
             @input="bmiError = ''">
+          <p id="bmi-computed" class="field-hint mb-0" x-show="baseline">Calculated from weight and height. Use Start over to enter a BMI yourself.</p>
           <p id="bmi-hint" class="field-hint mb-0">For example 27.5. No unit needed.</p>
           <p id="bmi-error" class="is-invalid-message text-danger mt-1" x-show="bmiError" x-text="bmiError"></p>
         </div>
 
         <p class="is-invalid-message text-danger" x-show="baselineError" x-text="baselineError" role="alert"></p>
 
-        <button type="submit" class="btn btn-primary" :disabled="!!baseline">Calculate</button>
+        <button type="submit" class="btn btn-primary">Calculate</button>
+        <button type="button" class="btn btn-outline-secondary" @click="startOver()">Start over</button>
       </form>
 
       <template x-if="baseline">

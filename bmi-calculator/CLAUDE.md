@@ -31,11 +31,20 @@ adults.
 - Fewer than two filled: "Fill in any two of weight, height and BMI."
   All three filled: "Leave one field empty and I'll calculate it. Or use
   Start over."
-- On success all three fields become read-only and the empty one shows the
-  computed value (in its dropdown unit, or kg/cm if none was picked). There
-  is no unlock; **Start over** is the only reset.
+- On success the empty field shows the computed value. A calculated
+  weight or height uses the same unit system as the measurement entered:
+  ft/in or in → lb, cm or m → kg; lb → ft/in, kg → cm.
+- After the first Calculate, **weight and height always stay editable**
+  and **BMI is locked** (read-only, with a visible note), even if BMI was
+  one of the original inputs. Every later Calculate recalculates BMI from
+  the current weight and height (a missing one gives "Fill in weight and
+  height."). Results update on Calculate, not live.
+- **Start over** sits next to Calculate (and again beside Copy results);
+  it's the only way to unlock BMI.
+- The target stores only the user's goal; its derived value follows any
+  baseline recalculation (`resolvedTarget` in `app.js`).
 - Focus moves to the "Baseline results" heading and a polite live region
-  announces the result.
+  announces the result, on every Calculate.
 
 ### Units
 
@@ -86,8 +95,10 @@ supported: stone, comma decimals. No plausibility limits.
 ## 2. Target
 
 - Weight / BMI mode toggle; switching modes clears the target.
-- Weight mode: goal weight (unit required, own dropdown, independent of the
-  baseline unit) → BMI and WHO label.
+- Weight mode: goal weight (unit required, own dropdown) → BMI and WHO
+  label. The goal unit dropdown defaults to the baseline weight's unit
+  (set on each baseline Calculate while the goal field is empty, and on
+  mode switch); a typed suffix or a different dropdown pick still wins.
 - BMI mode: goal BMI → weight in kg and lb, and WHO label.
 - Both show change from baseline, e.g. "−12.3 kg / −27.1 lb (−8.4%)"
   (percent of baseline weight, explicit sign).

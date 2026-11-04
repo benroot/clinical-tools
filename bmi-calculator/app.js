@@ -4,6 +4,11 @@
    loaded first. See CLAUDE.md in this folder for the spec.
    ------------------------------------------------------------- */
 
+// A calculated weight/height uses the same unit system (metric or
+// imperial) as the measurement the user entered.
+const WEIGHT_UNIT_FOR_HEIGHT_UNIT = { ftin: "lb", in: "lb", cm: "kg", m: "kg" };
+const HEIGHT_UNIT_FOR_WEIGHT_UNIT = { lb: "ftin", kg: "cm" };
+
 /**
  * Visible/announced text for a field's current unit.
  * @param {string} unit
@@ -68,20 +73,34 @@ function bmiCalculator() {
       return whoCategory(this.baseline.bmi);
     },
 
+    /**
+     * The target holds only the goal the user entered; the other
+     * value is derived from the current baseline height, so it
+     * follows any baseline recalculation.
+     * @returns {{mode: string, kg: number, bmi: number}|null}
+     */
+    get resolvedTarget() {
+      if (!this.baseline || !this.target) return null;
+      const { mode, kg, bmi } = this.target;
+      return mode === "bmi"
+        ? { mode, bmi, kg: weightAtBmi(bmi, this.baseline.cm) }
+        : { mode, kg, bmi: bmiFromWeightAndHeight(kg, this.baseline.cm) };
+    },
+
     get targetWeight() {
-      return formatWeight(this.target.kg);
+      return formatWeight(this.resolvedTarget.kg);
     },
 
     get targetBmi() {
-      return formatNumber(this.target.bmi);
+      return formatNumber(this.resolvedTarget.bmi);
     },
 
     get targetCategory() {
-      return whoCategory(this.target.bmi);
+      return whoCategory(this.resolvedTarget.bmi);
     },
 
     get targetChange() {
-      return formatChange(this.baseline.kg, this.target.kg);
+      return formatChange(this.baseline.kg, this.resolvedTarget.kg);
     },
 
     get lossRows() {
@@ -140,18 +159,24 @@ function bmiCalculator() {
     },
 
     calculateBaseline() {
-      if (this.baseline) return;
-
       this.weightError = "";
       this.heightError = "";
       this.bmiError = "";
       this.baselineError = "";
 
+      // The first Calculate takes any two fields. After that, weight
+      // and height are always the inputs and BMI (locked) is always
+      // recalculated from them, until Start over.
+      const recalculating = this.baseline !== null;
       const hasWeight = this.weightInput.trim() !== "";
       const hasHeight = this.heightInput.trim() !== "";
-      const hasBmi = this.bmiInput.trim() !== "";
+      const hasBmi = !recalculating && this.bmiInput.trim() !== "";
       const filledCount = [hasWeight, hasHeight, hasBmi].filter(Boolean).length;
 
+      if (recalculating && filledCount < 2) {
+        this.baselineError = "Fill in weight and height.";
+        return;
+      }
       if (filledCount < 2) {
         this.baselineError = "Fill in any two of weight, height and BMI.";
         return;
@@ -162,15 +187,25 @@ function bmiCalculator() {
       }
 
       const known = {};
+      let enteredWeightUnit = null;
+      let enteredHeightUnit = null;
       if (hasWeight) {
         const result = parseWeight(this.weightInput, this.weightUnit);
-        if (result.ok) known.kg = result.kg;
-        else this.weightError = result.error;
+        if (result.ok) {
+          known.kg = result.kg;
+          enteredWeightUnit = result.unit;
+        } else {
+          this.weightError = result.error;
+        }
       }
       if (hasHeight) {
         const result = parseHeight(this.heightInput, this.heightUnit);
-        if (result.ok) known.cm = result.cm;
-        else this.heightError = result.error;
+        if (result.ok) {
+          known.cm = result.cm;
+          enteredHeightUnit = result.unit;
+        } else {
+          this.heightError = result.error;
+        }
       }
       if (hasBmi) {
         const result = parseBmi(this.bmiInput);
@@ -189,18 +224,23 @@ function bmiCalculator() {
 
       this.baseline = solveBaseline(known);
 
-      // Fill the empty field, in its chosen unit if one was picked.
+      // Fill a calculated weight or height in the same unit system
+      // (metric/imperial) as the measurement the user entered.
       if (!hasWeight) {
-        this.weightUnit = this.weightUnit || "kg";
+        this.weightUnit = WEIGHT_UNIT_FOR_HEIGHT_UNIT[enteredHeightUnit];
         this.weightInput = formatWeightAs(this.baseline.kg, this.weightUnit);
       }
       if (!hasHeight) {
-        this.heightUnit = this.heightUnit || "cm";
+        this.heightUnit = HEIGHT_UNIT_FOR_WEIGHT_UNIT[enteredWeightUnit];
         this.heightInput = formatHeightAs(this.baseline.cm, this.heightUnit);
       }
       if (!hasBmi) {
         this.bmiInput = formatNumber(this.baseline.bmi);
       }
+
+      // Default the goal weight to the baseline's unit, unless the user
+      // has already started a goal of their own.
+      if (!this.targetInput.trim()) this.targetUnit = this.weightUnit;
 
       this.announce(
         "status",
@@ -209,10 +249,13 @@ function bmiCalculator() {
       this.$nextTick(() => this.$refs.baselineResultsHeading.focus());
     },
 
-    /** Switching between weight and BMI targets starts the target fresh. */
+    /**
+     * Switching between weight and BMI targets starts the target
+     * fresh, with the goal weight unit back on the baseline's unit.
+     */
     changeTargetMode() {
       this.targetInput = "";
-      this.targetUnit = "";
+      this.targetUnit = this.baseline ? this.weightUnit : "";
       this.targetError = "";
       this.target = null;
     },
@@ -233,22 +276,14 @@ function bmiCalculator() {
           this.targetError = result.error;
           return;
         }
-        this.target = {
-          mode: "bmi",
-          bmi: result.bmi,
-          kg: weightAtBmi(result.bmi, this.baseline.cm),
-        };
+        this.target = { mode: "bmi", bmi: result.bmi };
       } else {
         const result = parseWeight(this.targetInput, this.targetUnit);
         if (!result.ok) {
           this.targetError = result.error;
           return;
         }
-        this.target = {
-          mode: "weight",
-          kg: result.kg,
-          bmi: bmiFromWeightAndHeight(result.kg, this.baseline.cm),
-        };
+        this.target = { mode: "weight", kg: result.kg };
       }
 
       this.announce(
@@ -261,7 +296,7 @@ function bmiCalculator() {
     async copyResults() {
       if (!this.baseline) return;
       try {
-        await navigator.clipboard.writeText(buildResultsText(this.baseline, this.target));
+        await navigator.clipboard.writeText(buildResultsText(this.baseline, this.resolvedTarget));
         this.announce("copyStatus", "Copied");
       } catch {
         this.announce("copyStatus", "Couldn't copy. Your browser blocked clipboard access.");
