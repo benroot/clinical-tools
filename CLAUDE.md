@@ -19,6 +19,8 @@ common code scaffold.
   - `pregnancy-calculator/` — estimate a due date from LMP (Naegele's Rule).
   - `dose-counter/` — figure out how many pills remain to prescribe for a
     course of medication, given doses already administered.
+  - `map-calculator/` — mean arterial pressure from a systolic/diastolic
+    blood pressure (2/3 diastolic + 1/3 systolic).
 
 ## Working principles
 
