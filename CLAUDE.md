@@ -21,6 +21,8 @@ common code scaffold.
     course of medication, given doses already administered.
   - `map-calculator/` — mean arterial pressure from a systolic/diastolic
     blood pressure (2/3 diastolic + 1/3 systolic).
+  - `bmi-calculator/` — BMI from any two of weight, height and BMI, plus a
+    target "what if" and weight loss / BMI category threshold tables.
 
 ## Working principles
 

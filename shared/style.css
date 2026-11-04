@@ -92,6 +92,26 @@ body {
   outline-offset: 2px;
 }
 
+/* Touch targets at least 44px tall (WCAG 2.5.5) for every input,
+   select and button, including .btn-check toggle labels. Buttons
+   get it through padding rather than min-height so their text
+   stays vertically centered. */
+.form-control,
+.form-select {
+  min-height: 44px;
+}
+
+.btn {
+  --bs-btn-padding-y: 0.5625rem;
+}
+
+/* A unit picker beside a text input keeps its natural width instead
+   of splitting the row 50/50 with the input. */
+.input-group > .form-select {
+  flex: 0 0 auto;
+  width: auto;
+}
+
 .is-invalid-message {
   font-size: 0.875rem;
 }
