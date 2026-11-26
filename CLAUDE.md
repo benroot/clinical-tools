@@ -1,6 +1,6 @@
-# date-apps
+# clinical-tools
 
-A small collection of single-purpose date-calculation utility apps, sharing a
+A small collection of single-purpose clinical calculator apps, sharing a
 common code scaffold.
 
 ## Structure
@@ -18,11 +18,19 @@ common code scaffold.
     "educational and reference use only" footer. **Every page** (each app
     and the landing page) places `<app-disclaimer></app-disclaimer>` right
     after `</main>` and loads this script; edit the wording only here.
+- Icons live in the repo root (`favicon.ico`, `favicon.svg`,
+  `apple-touch-icon.png`, `icon-*.png`) with `manifest.webmanifest` for
+  Android. **Every page**, including each new app, copies the same
+  "Icons" block of `<link>` tags into its `<head>` right after `<title>`,
+  with paths prefixed `../` in app folders. Keep these as static tags, not
+  JS-injected: iOS, Android and browsers read icons from the initial HTML.
 - Apps currently in this repo:
   - `date-calculator/` — apply a day/week/month/year offset to a date.
   - `pregnancy-calculator/` — estimate a due date from LMP (Naegele's Rule).
   - `dose-counter/` — figure out how many pills remain to prescribe for a
     course of medication, given doses already administered.
+  - `pediatric-dosing/` — weight-based dosing for common pediatric
+    medications (currently acetaminophen).
   - `map-calculator/` — mean arterial pressure from a systolic/diastolic
     blood pressure (2/3 diastolic + 1/3 systolic).
   - `bmi-calculator/` — BMI from any two of weight, height and BMI, plus a
