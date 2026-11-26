@@ -90,7 +90,7 @@ Output: a table with one row per opioid and an IV column then a PO column (colum
 
 - `opioids.js` — the data above as a JS constant (`OPIOID_DATA`, not a `.json` file, so the app works when opened from disk where `fetch()` is blocked) plus pure functions: `routesFor`, `doseUnit`, `parseDose`, `equivalentDoses`, `formatDose`. No DOM, no Alpine. Load before `app.js`.
 - `app.js` — the Alpine component. Results update live as the dose is typed; changing the opioid keeps the route if it exists, otherwise picks the first available.
-- A visible warning at the top of the page says the data isn't yet verified and no cross-tolerance reduction is applied. Remove it once verified.
+- No app-specific warning on the page; it relies on the shared `<app-disclaimer>` footer (see root `CLAUDE.md`). The data is still unverified (see "Out of scope for now").
 
 ## Decisions (formerly open items)
 
