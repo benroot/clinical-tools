@@ -43,7 +43,8 @@ const OPIOID_DATA = {
   },
 };
 
-const ROUTE_LABELS = { iv: "IV", oral: "Oral" };
+// Also the column order of the results table.
+const ROUTE_LABELS = { iv: "IV", oral: "PO" };
 const MG_PER_UNIT = { mg: 1, mcg: 0.001 };
 
 const DOSE_PATTERN = /^\d+(?:\.\d+)?$/;
@@ -83,31 +84,32 @@ function parseDose(rawValue) {
  * Converts a dose of one opioid/route into every opioid/route in
  * the data: target_mg = current_mg * (E_target / E_current).
  * Full float precision; rounding happens only in formatDose().
+ * One row per opioid; `routes` has a key for every route in
+ * ROUTE_LABELS, null where the data has no entry for that route.
  * @param {string} opioidKey
  * @param {string} route
  * @param {number} dose - in doseUnit(opioidKey, route)
- * @returns {Array<{opioid: string, display: string, route: string,
- *   routeLabel: string, mg: number, unit: string, isEntered: boolean}>}
+ * @returns {Array<{opioid: string, display: string,
+ *   routes: Object<string, {mg: number, unit: string, isEntered: boolean}|null>}>}
  */
 function equivalentDoses(opioidKey, route, dose) {
   const currentMg = dose * MG_PER_UNIT[doseUnit(opioidKey, route)];
   const currentE = OPIOID_DATA.opioids[opioidKey].routes[route].equianalgesic_mg;
 
-  const rows = [];
-  for (const [targetKey, target] of Object.entries(OPIOID_DATA.opioids)) {
-    for (const [targetRoute, entry] of Object.entries(target.routes)) {
-      rows.push({
-        opioid: targetKey,
-        display: target.display,
-        route: targetRoute,
-        routeLabel: ROUTE_LABELS[targetRoute],
-        mg: currentMg * (entry.equianalgesic_mg / currentE),
-        unit: entry.display_unit || "mg",
-        isEntered: targetKey === opioidKey && targetRoute === route,
-      });
+  return Object.entries(OPIOID_DATA.opioids).map(([targetKey, target]) => {
+    const routes = {};
+    for (const targetRoute of Object.keys(ROUTE_LABELS)) {
+      const entry = target.routes[targetRoute];
+      routes[targetRoute] = entry
+        ? {
+            mg: currentMg * (entry.equianalgesic_mg / currentE),
+            unit: entry.display_unit || "mg",
+            isEntered: targetKey === opioidKey && targetRoute === route,
+          }
+        : null;
     }
-  }
-  return rows;
+    return { opioid: targetKey, display: target.display, routes };
+  });
 }
 
 /**

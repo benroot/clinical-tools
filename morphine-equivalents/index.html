@@ -40,15 +40,6 @@
       </div>
 
       <div class="field-group">
-        <label for="route" class="form-label">Route</label>
-        <select id="route" class="form-select" x-model="route" @change="calculate()">
-          <template x-for="option in routeOptions" :key="option.key">
-            <option :value="option.key" x-text="option.label" :selected="option.key === route"></option>
-          </template>
-        </select>
-      </div>
-
-      <div class="field-group">
         <label for="dose" class="form-label">Dose (<span x-text="unit"></span>)</label>
         <input
           type="text"
@@ -69,6 +60,15 @@
           role="alert"></p>
       </div>
 
+      <div class="field-group">
+        <label for="route" class="form-label">Route</label>
+        <select id="route" class="form-select" x-model="route" @change="calculate()">
+          <template x-for="option in routeOptions" :key="option.key">
+            <option :value="option.key" x-text="option.label" :selected="option.key === route"></option>
+          </template>
+        </select>
+      </div>
+
     </form>
 
     <section
@@ -83,19 +83,28 @@
           <thead>
             <tr>
               <th scope="col">Opioid</th>
-              <th scope="col">Route</th>
-              <th scope="col">Equivalent dose</th>
+              <template x-for="label in routeColumns" :key="label">
+                <th scope="col" x-text="label"></th>
+              </template>
             </tr>
           </thead>
           <tbody>
             <template x-for="row in rows" :key="row.key">
-              <tr :class="row.isEntered && 'table-active'">
-                <th scope="row">
-                  <span x-text="row.display"></span>
-                  <span x-show="row.isEntered">(entered)</span>
-                </th>
-                <td x-text="row.routeLabel"></td>
-                <td x-text="row.dose"></td>
+              <tr>
+                <th scope="row" x-text="row.display"></th>
+                <template x-for="cell in row.cells" :key="cell.route">
+                  <td :class="cell.isEntered && 'table-active'">
+                    <template x-if="cell.dose">
+                      <span>
+                        <span x-text="cell.dose"></span>
+                        <span x-show="cell.isEntered">(entered)</span>
+                      </span>
+                    </template>
+                    <template x-if="!cell.dose">
+                      <span><span aria-hidden="true">—</span><span class="visually-hidden">no data</span></span>
+                    </template>
+                  </td>
+                </template>
               </tr>
             </template>
           </tbody>

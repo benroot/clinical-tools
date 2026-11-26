@@ -81,10 +81,10 @@ Adding a new opioid means adding one entry; no pairwise conversion table is need
 
 Inputs:
 1. Current opioid: dropdown
-2. Route: dropdown (only routes that exist for the chosen opioid)
-3. Dose: number, in mg (mcg for fentanyl)
+2. Dose: number, in mg (mcg for fentanyl)
+3. Route: dropdown (only routes that exist for the chosen opioid)
 
-Output: a simple table listing every target opioid and route with its equivalent dose.
+Output: a table with one row per opioid and an IV column then a PO column (column order follows `ROUTE_LABELS` in `opioids.js`). A route with no data shows "—" (with visually-hidden "no data" for screen readers), matching the source table's convention. Routes are labeled IV / PO in both the table and the route dropdown.
 
 ## Implementation
 
@@ -94,7 +94,7 @@ Output: a simple table listing every target opioid and route with its equivalent
 
 ## Decisions (formerly open items)
 
-- **Identity row:** included in its normal position, marked "(entered)" and highlighted, so every table has the same rows and doubles as an input check.
+- **Identity row:** the entered opioid/route stays in its normal cell, marked "(entered)" and highlighted, so every table has the same rows and doubles as an input check.
 - **Rounding:** mg to at most 2 decimals with trailing zeros dropped (0.6, 2.5, 0.17); mcg to whole numbers. A result that rounds to 0 shows "< 0.01 mg" / "< 1 mcg". Rounding to real product increments is deferred until a verified list of strengths exists.
 - **Number type:** plain floats at full precision, rounded only for display. The error (~1e-16 mg) is far below display rounding; the three worked examples above come out exact.
 

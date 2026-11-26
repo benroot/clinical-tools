@@ -15,6 +15,7 @@ function opioidEquivalence() {
       key,
       display: opioid.display,
     })),
+    routeColumns: Object.values(ROUTE_LABELS),
     opioid: OPIOID_DATA.reference.opioid,
     route: routesFor(OPIOID_DATA.reference.opioid)[0],
     doseInput: "",
@@ -56,12 +57,19 @@ function opioidEquivalence() {
         return;
       }
 
+      // Cells in ROUTE_LABELS (column) order; dose is null where the
+      // opioid has no data for that route.
       this.rows = equivalentDoses(this.opioid, this.route, result.value).map((row) => ({
-        key: `${row.opioid}-${row.route}`,
+        key: row.opioid,
         display: row.display,
-        routeLabel: row.routeLabel,
-        dose: formatDose(row.mg, row.unit),
-        isEntered: row.isEntered,
+        cells: Object.keys(ROUTE_LABELS).map((route) => {
+          const cell = row.routes[route];
+          return {
+            route,
+            dose: cell ? formatDose(cell.mg, cell.unit) : null,
+            isEntered: cell ? cell.isEntered : false,
+          };
+        }),
       }));
     },
   };
