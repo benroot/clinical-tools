@@ -18,8 +18,6 @@ common code scaffold.
     "educational and reference use only" footer. **Every page** (each app
     and the landing page) places `<app-disclaimer></app-disclaimer>` right
     after `</main>` and loads this script; edit the wording only here.
-    App-specific caveats (e.g. unverified data) go in an
-    `alert alert-warning` at the top of that app's page instead.
 - Apps currently in this repo:
   - `date-calculator/` — apply a day/week/month/year offset to a date.
   - `pregnancy-calculator/` — estimate a due date from LMP (Naegele's Rule).

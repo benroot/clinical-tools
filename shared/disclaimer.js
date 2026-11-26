@@ -4,8 +4,6 @@
    use only" footer. Every page (each app and the landing page)
    places <app-disclaimer></app-disclaimer> right after its </main>
    and loads this script, so the wording lives in one place.
-   App-specific caveats don't belong here: they go in a warning
-   alert at the top of that app's page.
    ------------------------------------------------------------- */
 
 class AppDisclaimer extends HTMLElement {

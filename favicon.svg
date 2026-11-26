@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<style>.bg{fill:#0F766E}.fg{stroke:#fff}.fgf{fill:#fff}.ac{fill:#F59E0B}.hole{fill:#0F766E}
+@media (prefers-color-scheme:dark){.bg{fill:#042F2E}.fg{stroke:#99F6E4}.fgf{fill:#99F6E4}.ac{fill:#FBBF24}.hole{fill:#042F2E}}</style>
+<rect class="bg" width="64" height="64" rx="14"/>
+<g transform="translate(32 32) scale(0.92) translate(-34.75 -32.75)">
+<g fill="none" class="fg" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 13v14a13 13 0 0 0 26 0V13"/><path d="M32 40v2c0 5 4 7 14 7"/></g>
+<circle class="fgf" cx="19" cy="12" r="4.5"/><circle class="fgf" cx="45" cy="12" r="4.5"/>
+<circle class="ac" cx="46" cy="49" r="9"/><circle class="hole" cx="46" cy="49" r="3.5"/></g></svg>
