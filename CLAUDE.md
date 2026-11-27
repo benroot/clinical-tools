@@ -14,6 +14,12 @@ common code scaffold.
   - `date-utils.js` — pure date-math functions (no DOM, no Alpine). Load this
     before an app's own `app.js`.
   - `style.css` — small scaffold-level CSS layered on top of Bootstrap.
+    It defines the page layout every app relies on: each page puts all its
+    content in `<main class="app-shell">` (followed only by the disclaimer
+    footer), which centers it at `--app-max-width` and adds a responsive
+    side gutter, `--app-gutter` (`clamp(1rem, 5vw, 2rem)`: 16px on phones
+    up to 32px), so content never touches the screen edge. Don't place
+    content outside `.app-shell` or add per-app side margins.
   - `disclaimer.js` — defines `<app-disclaimer>`, the standard
     "educational and reference use only" footer. **Every page** (each app
     and the landing page) places `<app-disclaimer></app-disclaimer>` right

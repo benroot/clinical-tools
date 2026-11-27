@@ -9,6 +9,9 @@
 :root {
   --app-max-width: 40rem;
   --app-gap: 1.5rem;
+  /* Side breathing room so content never touches the screen edge:
+     16px on phones, growing with screen width, capped at 32px. */
+  --app-gutter: clamp(1rem, 5vw, 2rem);
 }
 
 body {
@@ -16,11 +19,14 @@ body {
 }
 
 /* Constrains and centers a single-task utility app. Distinct from
-   Bootstrap's .container, which is meant for full page layouts. */
+   Bootstrap's .container, which is meant for full page layouts.
+   The max-width grows by both gutters so the content itself stays
+   --app-max-width wide on large screens. */
 .app-shell {
-  max-width: var(--app-max-width);
+  max-width: calc(var(--app-max-width) + 2 * var(--app-gutter));
   margin-inline: auto;
   padding-block: 2rem;
+  padding-inline: var(--app-gutter);
 }
 
 .app-header {
@@ -93,9 +99,12 @@ body {
 }
 
 /* Standard disclaimer footer rendered by shared/disclaimer.js. Sits
-   below <main>, so it matches .app-shell's width and centering. */
+   below <main>, so it matches .app-shell's width and centering. The
+   gutter goes on this outer element (not the <footer>) so the
+   footer's top border spans exactly the content width. */
 app-disclaimer {
   display: block;
+  padding-inline: var(--app-gutter);
 }
 
 .app-disclaimer {
